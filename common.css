@@ -76,9 +76,4 @@ input[type=text]:focus{outline:2px solid var(--slime);border-color:transparent}
 
 a:focus-visible,button:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{outline:2px solid var(--slime);outline-offset:2px}
 
-/* スクール案内 */
-.school{border:1px dashed var(--candle);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px}
-.school strong{font-family:var(--display);font-weight:400;font-size:18px;color:var(--candle)}
-.school p{margin:0;font-size:14px;color:var(--mute)}
-
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
