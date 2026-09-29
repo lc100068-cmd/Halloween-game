@@ -63,9 +63,16 @@ h1 span{color:var(--slime)}
 </style>
 </head>
 <body>
+<nav class="appnav" aria-label="アプリの切り替え">
+  <div class="appnav-in">
+    <a class="home" href="index.html" aria-label="トップ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg></a>
+    <a class="to-zukan" href="zukan.html"><i></i>図鑑</a>
+    <a class="to-quiz" href="quiz.html" aria-current="page"><i></i>クイズ</a>
+    <a class="to-song" href="song.html"><i></i>ソング</a>
+  </div>
+</nav>
 <div class="wrap">
   <header>
-    <a class="back" href="index.html">← アプリをえらぶ</a>
     <div class="eyebrow">HALLOWEEN AI LAB ／ APP 02</div>
     <h1>オバケの<span>AIクイズ</span></h1>
     <p class="lead">オバケの「ポルタ」が出すクイズに5問チャレンジ。AIの得意なこと・苦手なことがわかります。</p>
@@ -200,7 +207,7 @@ function answer(pick){
       <button type="button" class="btn primary slime" id="next">${last?"結果を見る":"つぎの問題へ"} →</button>
     </div>`;
   const next=document.getElementById("next");
-  next.onclick=()=>{ idx++; last?showResult():showQuestion(); window.scrollTo({top:panel.offsetTop-16,behavior:"smooth"}); };
+  next.onclick=()=>{ idx++; last?showResult():showQuestion(); window.scrollTo({top:panel.offsetTop-81,behavior:"smooth"}); };
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
   next.focus({preventScroll:true});
 }

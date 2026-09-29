@@ -26,8 +26,20 @@ body{margin:0;background:var(--night);color:var(--ink);font-family:var(--body);f
 
 .wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:28px 60px;display:flex;flex-direction:column;gap:28px}
 header{display:flex;flex-direction:column;gap:8px}
-.back{align-self:flex-start;color:var(--mute);text-decoration:none;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:4px 14px}
-.back:hover{color:var(--candle);border-color:var(--candle)}
+/* アプリ切り替えバー：どのページでも上に固定。今いるアプリはアクセント色で塗る */
+.appnav{position:sticky;top:0;z-index:10;background:rgba(27,20,40,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.appnav-in{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:8px}
+.appnav a{--accent:var(--mute);flex:1 1 0;min-width:0;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
+.appnav a i{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.appnav a.home{flex:0 0 44px;color:var(--mute)}
+.appnav a.home svg{width:20px;height:20px}
+.appnav .to-zukan{--accent:var(--candle)}
+.appnav .to-quiz{--accent:var(--slime)}
+.appnav .to-song{--accent:var(--berry)}
+.appnav a:hover{border-color:var(--accent)}
+.appnav a[aria-current=page]{background:var(--accent);border-color:var(--accent);color:#241a08}
+.appnav a[aria-current=page] i{background:#241a08}
+.appnav a:focus-visible{outline:2px solid var(--slime);outline-offset:2px}
 .eyebrow{font-family:var(--mono);color:var(--candle);letter-spacing:.12em;font-size:13px}
 h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,6vw,52px);line-height:1.15;margin:0;text-wrap:balance}
 h1 span{color:var(--candle);white-space:nowrap}
@@ -62,7 +74,7 @@ input[type=text]:focus{outline:2px solid var(--slime);border-color:transparent}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);flex:1 1 140px}
 .toast{font-size:13px;color:var(--slime);min-height:1.2em;margin:0}
 
-a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--slime);outline-offset:2px}
+a:focus-visible,button:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{outline:2px solid var(--slime);outline-offset:2px}
 
 /* スクール案内 */
 .school{border:1px dashed var(--candle);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px}
