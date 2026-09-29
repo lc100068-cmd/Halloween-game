@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="オバケのポルタが出すAIクイズに5問チャレンジ。AIの得意なこと・苦手なことがわかります。">
+<meta name="theme-color" content="#1b1428">
+<title>オバケのAIクイズ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@400;500;700&family=DotGothic16&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+/* Layout: オバケのポルタが吹き出しで出題し、下に答えのボタン。1問ずつ進む一本道。 */
+.wrap{max-width:720px}
+h1 span{color:var(--slime)}
+.eyebrow{color:var(--slime)}
+
+.progress{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--mute)}
+.dots{display:flex;gap:6px}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid var(--line);display:block}
+.dots i.now{border-color:var(--slime)}
+.dots i.ok{background:var(--slime);border-color:var(--slime)}
+.dots i.ng{background:var(--wrong);border-color:var(--wrong)}
+
+.stage{display:flex;gap:14px;align-items:flex-start}
+.porta{width:84px;flex:0 0 auto;color:var(--ink)}
+.porta.float{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+.bubble{position:relative;background:var(--night);border:1px solid var(--line);border-radius:16px;padding:14px 16px;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-8px;top:24px;width:14px;height:14px;background:var(--night);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+.bubble .who{font-family:var(--mono);font-size:12px;color:var(--slime)}
+.bubble p{margin:0}
+.q{font-weight:700;font-size:18px;line-height:1.6}
+
+.choices{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
+.choice{width:100%;text-align:left;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:14px 16px;font:inherit;font-size:16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;transition:.15s}
+.choice:hover:not(:disabled){border-color:var(--slime)}
+.choice b{font-family:var(--mono);font-weight:400;color:var(--candle);flex:0 0 auto}
+.choice:disabled{cursor:default}
+.choice.ok{border-color:var(--slime);background:rgba(143,227,192,.12)}
+.choice.ok b{color:var(--slime)}
+.choice.ng{border-color:var(--wrong);background:rgba(255,138,122,.1)}
+.choice.ng b{color:var(--wrong)}
+.choice.dim{opacity:.5}
+
+.answer{border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line)}
+.answer .verdict{font-family:var(--display);font-size:20px;margin:0}
+.answer.ok .verdict{color:var(--slime)}
+.answer.ng .verdict{color:var(--wrong)}
+.answer p{margin:0;font-size:15px}
+.point{font-size:14px;color:var(--mute);border-top:1px dashed var(--line);padding-top:8px}
+.point b{color:var(--candle);margin-right:4px}
+.btn.primary.slime{background:var(--slime)}
+
+.result{text-align:center;align-items:center}
+.score{font-family:var(--display);font-size:56px;line-height:1;color:var(--slime);margin:0}
+.score small{font-size:22px;color:var(--mute)}
+.title{font-family:var(--display);font-size:24px;margin:0}
+.learned{text-align:left;align-self:stretch;margin:0;padding-left:1.2em;font-size:15px}
+.learned li{margin-bottom:4px}
+.result .actions{align-self:stretch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="index.html">← アプリをえらぶ</a>
+    <div class="eyebrow">HALLOWEEN AI LAB ／ APP 02</div>
+    <h1>オバケの<span>AIクイズ</span></h1>
+    <p class="lead">オバケの「ポルタ」が出すクイズに5問チャレンジ。AIの得意なこと・苦手なことがわかります。</p>
+  </header>
+
+  <main class="panel" id="panel" aria-live="polite"></main>
+
+  <div class="school">
+    <strong>AIとうまく付き合うコツ、知りたい方へ</strong>
+    <p>AIは便利ですが、まちがえることもあります。得意なところを上手に使うコツを、AIスクールの体験会で学べます。スタッフにお声がけください。</p>
+  </div>
+</div>
+
+<svg hidden aria-hidden="true">
+  <symbol id="ghost" viewBox="0 0 84 96">
+    <path d="M10 88V40a32 32 0 0 1 64 0v48l-9-7-8 7-8-7-7 7-8-7-8 7-8-7z" fill="#f3ecff" stroke="#a99bc4" stroke-width="2" stroke-linejoin="round"/>
+    <ellipse cx="31" cy="42" rx="5" ry="7" fill="#1b1428"/>
+    <ellipse cx="53" cy="42" rx="5" ry="7" fill="#1b1428"/>
+    <ellipse cx="24" cy="54" rx="5" ry="3" fill="#ff7ab6" opacity=".6"/>
+    <ellipse cx="60" cy="54" rx="5" ry="3" fill="#ff7ab6" opacity=".6"/>
+    <path d="M30 10l6 -8 6 8" fill="#ffb547" stroke="#241a08" stroke-width="1.5" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<script>
+// ===== 問題 =====
+// a: 正解の番号 / say: ポルタの前置き / why: 解説 / point: AIのポイント
+const QUIZ = [
+  {
+    say:"ヒュ〜ドロドロ…ぼくはオバケのポルタ。まずはカンタンな問題からいくよ！",
+    q:"画像をつくるAIに「かわいいオバケの絵をかいて」と2回頼みました。どうなる？",
+    c:["2回とも、まったく同じ絵になる","頼むたびに、ちがう絵になる"],
+    a:1,
+    why:"画像をつくるAIは、毎回すこしずつちがう絵をつくります。同じ言葉でも、出てくる絵は1回ごとに変わるんだ。",
+    point:"気に入らなければ「もう一回」。何度でもためせるのがAIのいいところ。"
+  },
+  {
+    say:"つぎはちょっとむずかしいぞ〜。",
+    q:"AIが、自信たっぷりに答えてくれました。その答えは…？",
+    c:["AIが言うことだから、ぜんぶ正しい","もっともらしいウソがまざることがある"],
+    a:1,
+    why:"AIは、まちがったことでも自信たっぷりに答えることがあります。これを「ハルシネーション（幻覚）」とよぶよ。",
+    point:"大事なこと（お金・健康・法律など）は、ほかの情報でもたしかめよう。"
+  },
+  {
+    say:"AIの「得意なこと」はわかるかな？",
+    q:"つぎのうち、AIがいちばん得意なのはどれ？",
+    c:["長い文章を、3行にまとめる","あなたの家の冷蔵庫に何が入っているか当てる","今この瞬間、マルシェの外が晴れているか見て答える"],
+    a:0,
+    why:"文章をまとめたり、書きなおしたりするのはAIの得意わざ。でも、見ていないもの・知らされていないことは、AIにもわからないんだ。",
+    point:"AIは「わたされた情報」から考える。知ってほしいことは、ちゃんと伝えよう。"
+  },
+  {
+    say:"ここからが、じつは一番だいじな問題だよ。",
+    q:"ハロウィンの料理を教えてほしいとき、いい答えが返ってきやすい頼み方は？",
+    c:["「おいしい料理を教えて」","「小学生といっしょに30分で作れる、かぼちゃを使ったハロウィンのおやつを3つ教えて」"],
+    a:1,
+    why:"だれと・どれくらいの時間で・何を使って・いくつ——くわしく頼むほど、AIはあなたにぴったりの答えを出せます。",
+    point:"AIへの頼み方（プロンプト）しだいで、答えは大きく変わる！"
+  },
+  {
+    say:"さいごの問題！ヒュ〜ドロドロ…",
+    q:"AIとおしゃべりするとき、入力しないほうがいいのはどれ？",
+    c:["好きな食べもの","ハロウィンの仮装のアイデア","クレジットカードの番号やパスワード"],
+    a:2,
+    why:"入力した内容が、サービスの改善などに使われることもあります。お金やアカウントにかかわる情報は、AIに入れないのが安心だよ。",
+    point:"個人情報やひみつの情報は、AIに入れない。これだけは覚えてね。"
+  }
+];
+
+const TITLES = [
+  [5,"AIマスター","全問正解！AIの得意・苦手をしっかりわかってるね。ポルタもびっくり！"],
+  [3,"AIなかよし名人","なかなかやるね！AIとうまく付き合う力がついてきたよ。"],
+  [0,"AIたんけん家","ここからがスタート！今日わかったことで、AIがもっと楽しくなるよ。"]
+];
+
+const panel=document.getElementById("panel");
+let idx=0, score=0, results=[];
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function ghost(mood){
+  // mood: "happy" | "oops" — 口の形だけ変える
+  const d=mood==="oops"?"M36 60q6 -6 12 0":"M36 56q6 6 12 0";
+  return `<svg class="porta float" viewBox="0 0 84 96" aria-hidden="true"><use href="#ghost"/><path d="${d}" fill="none" stroke="#1b1428" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
+function dots(){
+  return `<div class="progress"><span>Q${Math.min(idx+1,QUIZ.length)} / ${QUIZ.length}</span><div class="dots">${
+    QUIZ.map((_,i)=>`<i class="${results[i]===true?"ok":results[i]===false?"ng":i===idx?"now":""}"></i>`).join("")
+  }</div></div>`;
+}
+
+function showQuestion(){
+  const item=QUIZ[idx];
+  panel.innerHTML=`
+    ${dots()}
+    <div class="stage">
+      ${ghost("happy")}
+      <div class="bubble">
+        <div class="who">ポルタ</div>
+        <p>${esc(item.say)}</p>
+        <p class="q" id="q" tabindex="-1">${esc(item.q)}</p>
+      </div>
+    </div>
+    <ul class="choices">${item.c.map((t,i)=>`<li><button type="button" class="choice" data-i="${i}"><b>${"ABC"[i]}</b><span>${esc(t)}</span></button></li>`).join("")}</ul>
+    <div id="answer"></div>`;
+  panel.querySelectorAll(".choice").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
+  document.getElementById("q").focus({preventScroll:true});
+}
+
+function answer(pick){
+  const item=QUIZ[idx], ok=pick===item.a;
+  if(ok) score++;
+  results[idx]=ok;
+  panel.querySelectorAll(".choice").forEach(b=>{
+    const i=Number(b.dataset.i);
+    b.disabled=true;
+    if(i===item.a) b.classList.add("ok");
+    else if(i===pick) b.classList.add("ng");
+    else b.classList.add("dim");
+  });
+  panel.querySelector(".progress").outerHTML=dots();
+  panel.querySelector(".porta").outerHTML=ghost(ok?"happy":"oops");
+  const last=idx===QUIZ.length-1;
+  const box=document.getElementById("answer");
+  box.innerHTML=`
+    <div class="answer ${ok?"ok":"ng"}">
+      <p class="verdict">${ok?"せいかい！":"ざんねん…"}</p>
+      <p>${esc(item.why)}</p>
+      <p class="point"><b>AIのポイント</b>${esc(item.point)}</p>
+    </div>
+    <div class="actions" style="margin-top:14px">
+      <button type="button" class="btn primary slime" id="next">${last?"結果を見る":"つぎの問題へ"} →</button>
+    </div>`;
+  const next=document.getElementById("next");
+  next.onclick=()=>{ idx++; last?showResult():showQuestion(); window.scrollTo({top:panel.offsetTop-16,behavior:"smooth"}); };
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
+  next.focus({preventScroll:true});
+}
+
+function showResult(){
+  const [,title,msg]=TITLES.find(t=>score>=t[0]);
+  panel.classList.add("result");
+  panel.innerHTML=`
+    ${dots()}
+    ${ghost(score>=3?"happy":"oops")}
+    <p class="score">${score}<small> / ${QUIZ.length} 問</small></p>
+    <p class="title">${title}</p>
+    <p>${msg}</p>
+    <ol class="learned">${QUIZ.map(q=>`<li>${esc(q.point)}</li>`).join("")}</ol>
+    <div class="actions">
+      <button type="button" class="btn primary slime" id="again">もう一度あそぶ</button>
+      <a class="btn ghost" href="index.html">ほかのアプリへ</a>
+    </div>`;
+  document.getElementById("again").onclick=()=>{
+    idx=0; score=0; results=[]; panel.classList.remove("result"); showQuestion();
+  };
+}
+
+showQuestion();
+</script>
+</body>
+</html>
