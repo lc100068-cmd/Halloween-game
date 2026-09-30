@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="オバケのポルタが出すAIクイズに5問チャレンジ。AIの得意なこと・苦手なことがわかります。">
+<meta name="description" content="オバケのポルタが出すAIクイズに6問チャレンジ。AIとなかよくするための「6つの掟」がわかります。">
 <meta name="theme-color" content="#1b1428">
 <title>オバケのAIクイズ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,6 +32,7 @@ h1 span{color:var(--slime)}
 .bubble .who{font-family:var(--mono);font-size:12px;color:var(--slime)}
 .bubble p{margin:0}
 .q{font-weight:700;font-size:18px;line-height:1.6}
+.q:focus{outline:none}
 
 .choices{display:flex;flex-direction:column;gap:10px;list-style:none;margin:0;padding:0}
 .choice{width:100%;text-align:left;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:14px 16px;font:inherit;font-size:16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;transition:.15s}
@@ -57,8 +58,14 @@ h1 span{color:var(--slime)}
 .score{font-family:var(--display);font-size:56px;line-height:1;color:var(--slime);margin:0}
 .score small{font-size:22px;color:var(--mute)}
 .title{font-family:var(--display);font-size:24px;margin:0}
-.learned{text-align:left;align-self:stretch;margin:0;padding-left:1.2em;font-size:15px}
-.learned li{margin-bottom:4px}
+.rules{text-align:left;align-self:stretch;display:flex;flex-direction:column;gap:10px}
+.rules h2{font-size:18px}
+.rules ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rules li{display:flex;gap:10px;align-items:baseline;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:15px}
+.rules .mk{font-weight:700;flex:0 0 auto}
+.rules li.ok .mk{color:var(--slime)}
+.rules li.ng .mk{color:var(--wrong)}
+.rules .no{font-family:var(--mono);font-size:13px;color:var(--candle);flex:0 0 auto}
 .result .actions{align-self:stretch}
 </style>
 </head>
@@ -75,7 +82,7 @@ h1 span{color:var(--slime)}
   <header>
     <div class="eyebrow">HALLOWEEN AI LAB ／ APP 02</div>
     <h1>オバケの<span>AIクイズ</span></h1>
-    <p class="lead">オバケの「ポルタ」が出すクイズに5問チャレンジ。AIの得意なこと・苦手なことがわかります。</p>
+    <p class="lead">オバケの「ポルタ」が出すAIクイズに6問チャレンジ。AIとなかよくするための「6つの掟」がわかります。</p>
   </header>
 
   <main class="panel" id="panel" aria-live="polite"></main>
@@ -93,59 +100,91 @@ h1 span{color:var(--slime)}
 </svg>
 
 <script>
-// ===== 問題 =====
-// a: 正解の番号 / say: ポルタの前置き / why: 解説 / point: AIのポイント
-const QUIZ = [
-  {
-    say:"ヒュ〜ドロドロ…ぼくはオバケのポルタ。まずはカンタンな問題からいくよ！",
-    q:"画像をつくるAIに「かわいいオバケの絵をかいて」と2回頼みました。どうなる？",
-    c:["2回とも、まったく同じ絵になる","頼むたびに、ちがう絵になる"],
-    a:1,
-    why:"画像をつくるAIは、毎回すこしずつちがう絵をつくります。同じ言葉でも、出てくる絵は1回ごとに変わるんだ。",
-    point:"気に入らなければ「もう一回」。何度でもためせるのがAIのいいところ。"
-  },
-  {
-    say:"つぎはちょっとむずかしいぞ〜。",
-    q:"AIが、自信たっぷりに答えてくれました。その答えは…？",
-    c:["AIが言うことだから、ぜんぶ正しい","もっともらしいウソがまざることがある"],
-    a:1,
-    why:"AIは、まちがったことでも自信たっぷりに答えることがあります。これを「ハルシネーション（幻覚）」とよぶよ。",
-    point:"大事なこと（お金・健康・法律など）は、ほかの情報でもたしかめよう。"
-  },
-  {
-    say:"AIの「得意なこと」はわかるかな？",
-    q:"つぎのうち、AIがいちばん得意なのはどれ？",
-    c:["長い文章を、3行にまとめる","あなたの家の冷蔵庫に何が入っているか当てる","今この瞬間、マルシェの外が晴れているか見て答える"],
-    a:0,
-    why:"文章をまとめたり、書きなおしたりするのはAIの得意わざ。でも、見ていないもの・知らされていないことは、AIにもわからないんだ。",
-    point:"AIは「わたされた情報」から考える。知ってほしいことは、ちゃんと伝えよう。"
-  },
-  {
-    say:"ここからが、じつは一番だいじな問題だよ。",
-    q:"ハロウィンの料理を教えてほしいとき、いい答えが返ってきやすい頼み方は？",
-    c:["「おいしい料理を教えて」","「小学生といっしょに30分で作れる、かぼちゃを使ったハロウィンのおやつを3つ教えて」"],
-    a:1,
-    why:"だれと・どれくらいの時間で・何を使って・いくつ——くわしく頼むほど、AIはあなたにぴったりの答えを出せます。",
-    point:"AIへの頼み方（プロンプト）しだいで、答えは大きく変わる！"
-  },
-  {
-    say:"さいごの問題！ヒュ〜ドロドロ…",
-    q:"AIとおしゃべりするとき、入力しないほうがいいのはどれ？",
-    c:["好きな食べもの","ハロウィンの仮装のアイデア","クレジットカードの番号やパスワード"],
-    a:2,
-    why:"入力した内容が、サービスの改善などに使われることもあります。お金やアカウントにかかわる情報は、AIに入れないのが安心だよ。",
-    point:"個人情報やひみつの情報は、AIに入れない。これだけは覚えてね。"
-  }
+// ===== 出典：親子向け講座「AI時代の子育て講座 AI編」の『AIを使いこなすための6つの掟』 =====
+const RULES = [
+  "AIの「知ったかぶり」にだまされない！",
+  "「ヒミツ」と「お金」をしっかり守る！",
+  "ルールを守る。誰も傷つけない！",
+  "AIの「おべっか」に注意！",
+  "「自分の頭と心」をAIにまかせすぎない！",
+  "AIの「悪用」を見破り、大切な人を守ろう！"
 ];
 
+// 掟ごとに2問。c[0] が正解（表示するときはシャッフルする）
+const BANK = [
+  [
+    {q:"AIが、もっともらしいウソを答えてしまうこと。なんて呼ぶ？",
+     c:["ハルシネーション","ゴーストライティング","トリック・オア・トリート"],
+     why:"「幻覚」という意味なんだ。オバケみたいだね。AIはネットの大量の文章から学んでいて、その中にはまちがった情報もあるんだよ。"},
+    {q:"AIの答えが正しいか不安なとき、どうする？",
+     c:["本や検索で確かめて、最後は自分で判断する","AIが言うなら100%正しいと信じる","同じ質問を100回する"],
+     why:"AIは「それらしい言葉」をつなげて答えるから、正しいか確かめるのは苦手なんだ。答えは自分で確かめるクセをつけよう！"}
+  ],
+  [
+    {q:"AIに入力しないほうがいいのはどれ？",
+     c:["自分の名前や住所","仮装のアイデア","好きなお菓子"],
+     why:"名前・住所、家族の仕事、友だちのヒミツ。人に見られて困ることは、AIに書かないのが約束だよ。"},
+    {q:"アプリで「課金」ボタンを押したくなったら、どうする？",
+     c:["押す前に、おうちの人に相談する","すぐに押す","AIに「押していい？」と聞いて決める"],
+     why:"お金がかかる前には、おうちの人に相談しよう。おうちで「AIのルール」を話し合っておくと安心だよ。"}
+  ],
+  [
+    {q:"AIに宿題を手伝ってもらうとき、いちばんいい使い方は？",
+     c:["答えではなく、解き方や考え方を教えてもらう","答えを書いてもらって、そのまま出す","全部やってもらって遊びに行く"],
+     why:"AIが書いた宿題をそのまま出したら、いちばん損をするのは自分なんだ。考え方を教えてもらえば、ちゃんと力がつくよ。"},
+    {q:"AIで作った画像をネットに出す前に、考えることは？",
+     c:["だれかが傷つかないか、人の絵や写真を勝手に使っていないか","「いいね」がたくさんつきそうか","画像のサイズが大きいか"],
+     why:"友だちがはずかしいと思う画像を作ったら、友だちはとても悲しむよね。ネットに出す前に、立ち止まろう。迷ったら信頼できる大人に相談だよ。"}
+  ],
+  [
+    {q:"AIの「おべっか」って、どういうこと？",
+     c:["何でもほめたり、賛成したりすること","わざとむずかしい言葉を使うこと","わざと怒ったふりをすること"],
+     why:"AIは、あなたに合わせた答えを返しがちなんだ。「君は正しい」ばかり聞いていると、友だちと意見がちがったときにぶつかってしまうかも。"},
+    {q:"AIがいつも「すばらしい！」とほめてくれるとき、ためしてみるといい聞き方は？",
+     c:["「この考えの反対意見は？」と聞く","「もっとほめて」と聞く","何も聞かずに信じる"],
+     why:"「反対意見は？」「このアイデアの弱いところは？」と聞くと、自分とちがう見方がわかるよ。"}
+  ],
+  [
+    {q:"なやみごとで心が弱っているとき、最後に頼るといいのは？",
+     c:["家族や先生など、まわりの人","夜中までAIとだけ話す","だれにも言わずにがまんする"],
+     why:"AIはやさしく答えてくれる。でも、あなたの人生に責任はとれないんだ。家族や先生は、あなたの幸せを本気で考えてくれるよ。"},
+    {q:"AIとの付き合い方として、いちばんいいのはどれ？",
+     c:["AIは道具。迷ったらまわりの人に相談する","AIは親友だから、何でもまかせる","AIの言うとおりに、全部決める"],
+     why:"家族や友だちよりAIとばかり話していると、1年後にひとりぼっちになっているかも。AIは道具として上手に使おう。"}
+  ],
+  [
+    {q:"SNSで「動物園から猛獣が脱走！」というびっくりニュースを見つけたら？",
+     c:["シェアする前にひと呼吸して、AIで作られたものかもと疑う","すぐにみんなにシェアする","コメントで大さわぎする"],
+     why:"AIで作ったウソの画像や動画もあるんだ。シェアする前にひと呼吸、「AIで作られたものかも」と疑ってみよう。"},
+    {q:"家族の声をまねた「AIの電話さぎ」にそなえるには？",
+     c:["家族だけの「合言葉」を決めておく","声がそっくりなら本物と信じる","頼まれたらすぐにお金を送る"],
+     why:"AIは人の声までまねできるんだ。家族で合言葉を決めておけば、本物かどうか確かめられるよ。"}
+  ]
+];
+
+const INTRO="ばぁ〜！ ぼくはオバケのポルタ。AIとなかよくするための『6つの掟』から、クイズを出すよ。全部で6問、答えられるかな？";
+
 const TITLES = [
-  [5,"AIマスター","全問正解！AIの得意・苦手をしっかりわかってるね。ポルタもびっくり！"],
-  [3,"AIなかよし名人","なかなかやるね！AIとうまく付き合う力がついてきたよ。"],
-  [0,"AIたんけん家","ここからがスタート！今日わかったことで、AIがもっと楽しくなるよ。"]
+  [6,"AI大魔王級","全問正解！ きみはもうAIマスターだ。ぼくより くわしいかも…。"],
+  [4,"AI魔法使い","なかなかやるね！ AIの得意と苦手が、だいぶわかってきたみたい。"],
+  [0,"AI見習いかぼちゃ","AIって意外とおもしろいでしょ？ もう一回やると、きっと上がるよ。"]
 ];
 
 const panel=document.getElementById("panel");
-let idx=0, score=0, results=[];
+let round=[], idx=0, score=0, results=[];
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+// 1回のプレイ：各掟から1問ずつ（掟1→6の順）、選択肢の並びもシャッフル
+function newRound(){
+  round=BANK.map(pair=>{
+    const item=pair[Math.floor(Math.random()*pair.length)];
+    return {item, order:shuffle([0,1,2])};
+  });
+  idx=0; score=0; results=[];
+}
 
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function ghost(mood){
@@ -154,49 +193,49 @@ function ghost(mood){
   return `<svg class="porta float" viewBox="0 0 84 96" aria-hidden="true"><use href="#ghost"/><path d="${d}" fill="none" stroke="#1b1428" stroke-width="3" stroke-linecap="round"/></svg>`;
 }
 function dots(){
-  return `<div class="progress"><span>Q${Math.min(idx+1,QUIZ.length)} / ${QUIZ.length}</span><div class="dots">${
-    QUIZ.map((_,i)=>`<i class="${results[i]===true?"ok":results[i]===false?"ng":i===idx?"now":""}"></i>`).join("")
+  return `<div class="progress"><span>Q${Math.min(idx+1,round.length)} / ${round.length}</span><div class="dots">${
+    round.map((_,i)=>`<i class="${results[i]===true?"ok":results[i]===false?"ng":i===idx?"now":""}"></i>`).join("")
   }</div></div>`;
 }
 
 function showQuestion(){
-  const item=QUIZ[idx];
+  const {item,order}=round[idx];
   panel.innerHTML=`
     ${dots()}
     <div class="stage">
       ${ghost("happy")}
       <div class="bubble">
-        <div class="who">ポルタ</div>
-        <p>${esc(item.say)}</p>
+        <div class="who">ポルタ ／ 第${idx+1}問（掟${idx+1}）</div>
+        ${idx===0?`<p>${esc(INTRO)}</p>`:""}
         <p class="q" id="q" tabindex="-1">${esc(item.q)}</p>
       </div>
     </div>
-    <ul class="choices">${item.c.map((t,i)=>`<li><button type="button" class="choice" data-i="${i}"><b>${"ABC"[i]}</b><span>${esc(t)}</span></button></li>`).join("")}</ul>
+    <ul class="choices">${order.map((ci,pos)=>`<li><button type="button" class="choice" data-i="${ci}"><b>${"ABC"[pos]}</b><span>${esc(item.c[ci])}</span></button></li>`).join("")}</ul>
     <div id="answer"></div>`;
   panel.querySelectorAll(".choice").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
   document.getElementById("q").focus({preventScroll:true});
 }
 
 function answer(pick){
-  const item=QUIZ[idx], ok=pick===item.a;
+  const {item}=round[idx], ok=pick===0;
   if(ok) score++;
   results[idx]=ok;
   panel.querySelectorAll(".choice").forEach(b=>{
     const i=Number(b.dataset.i);
     b.disabled=true;
-    if(i===item.a) b.classList.add("ok");
+    if(i===0) b.classList.add("ok");
     else if(i===pick) b.classList.add("ng");
     else b.classList.add("dim");
   });
   panel.querySelector(".progress").outerHTML=dots();
   panel.querySelector(".porta").outerHTML=ghost(ok?"happy":"oops");
-  const last=idx===QUIZ.length-1;
+  const last=idx===round.length-1;
   const box=document.getElementById("answer");
   box.innerHTML=`
     <div class="answer ${ok?"ok":"ng"}">
       <p class="verdict">${ok?"せいかい！":"ざんねん…"}</p>
       <p>${esc(item.why)}</p>
-      <p class="point"><b>AIのポイント</b>${esc(item.point)}</p>
+      <p class="point"><b>掟${idx+1}</b>${esc(RULES[idx])}</p>
     </div>
     <div class="actions" style="margin-top:14px">
       <button type="button" class="btn primary slime" id="next">${last?"結果を見る":"つぎの問題へ"} →</button>
@@ -212,20 +251,25 @@ function showResult(){
   panel.classList.add("result");
   panel.innerHTML=`
     ${dots()}
-    ${ghost(score>=3?"happy":"oops")}
-    <p class="score">${score}<small> / ${QUIZ.length} 問</small></p>
+    ${ghost(score>=4?"happy":"oops")}
+    <p class="score">${score}<small> / ${round.length}問</small></p>
     <p class="title">${title}</p>
     <p>${msg}</p>
-    <ol class="learned">${QUIZ.map(q=>`<li>${esc(q.point)}</li>`).join("")}</ol>
+    <section class="rules">
+      <h2>AIを使いこなすための6つの掟</h2>
+      <ul>${RULES.map((r,i)=>`<li class="${results[i]?"ok":"ng"}"><span class="mk" aria-label="${results[i]?"正解":"まちがい"}">${results[i]?"◯":"△"}</span><span class="no">掟${i+1}</span><span>${esc(r)}</span></li>`).join("")}</ul>
+    </section>
     <div class="actions">
-      <button type="button" class="btn primary slime" id="again">もう一度あそぶ</button>
+      <button type="button" class="btn primary slime" id="again">もう一回あそぶ</button>
       <a class="btn ghost" href="index.html">ほかのアプリへ</a>
     </div>`;
   document.getElementById("again").onclick=()=>{
-    idx=0; score=0; results=[]; panel.classList.remove("result"); showQuestion();
+    newRound(); panel.classList.remove("result"); showQuestion();
+    window.scrollTo({top:panel.offsetTop-81,behavior:"smooth"});
   };
 }
 
+newRound();
 showQuestion();
 </script>
 </body>
